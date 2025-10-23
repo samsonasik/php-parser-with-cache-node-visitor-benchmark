@@ -34,5 +34,5 @@ jobs:
                 run: composer install --ansi
                 working-directory: ${{ matrix.directory }}
 
-            -   run: php ../src/test.php
+            -   run: php ../test.php
                 working-directory: ${{ matrix.directory }}
