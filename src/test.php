@@ -56,27 +56,40 @@ final class CountingVisitor extends NodeVisitorAbstract
 final class CachingNodeTraverser extends NodeTraverser
 {
 	/**
-	 * Cache of node class name to the list of visitors that should be applied.
+	 * Cache visitors per node class name, similar to Rector's traverser.
 	 * @var array<string, array<int, NodeVisitor>>
 	 */
-	private array $visitorsByNodeClass = [];
+	private array $visitorsByClass = [];
 
 	/**
-	 * Cache the result of the parent's visitor selection per node class.
-	 * This mirrors the approach used in Rector's RectorNodeTraverser.
+	 * Cache and return only the visitors applicable to this node class.
+	 * A visitor can opt-in by implementing an "appliesTo(Node $node): bool" method.
+	 * If the method is absent, the visitor is considered applicable to all nodes.
 	 *
 	 * @return NodeVisitor[]
 	 */
 	public function getVisitorsForNode(Node $node)
 	{
 		$class = $node::class;
-		if (isset($this->visitorsByNodeClass[$class])) {
-			return $this->visitorsByNodeClass[$class];
+		if (isset($this->visitorsByClass[$class])) {
+			return $this->visitorsByClass[$class];
 		}
 
-		$visitors = parent::getVisitorsForNode($node);
-		$this->visitorsByNodeClass[$class] = $visitors;
-		return $visitors;
+		$applicable = [];
+		foreach ($this->visitors as $visitor) {
+			if (method_exists($visitor, 'appliesTo')) {
+				// Optional applicability hook; treat falsey as not applicable.
+				/** @var callable $call */
+				$call = [$visitor, 'appliesTo'];
+				if (!\is_callable($call) || (bool) $call($node) !== true) {
+					continue;
+				}
+			}
+			$applicable[] = $visitor;
+		}
+
+		$this->visitorsByClass[$class] = $applicable;
+		return $applicable;
 	}
 }
 
@@ -187,34 +200,36 @@ if ($asts === []) {
 
 // proceed to measured traversal output only
 
-// 4) Choose traverser strategy and perform one full traversal of all ASTs
-$traverserFactory = function () use ($mode) {
-	if ($mode === 'WithCache') {
-		return new CachingNodeTraverser();
-	}
-	return new NodeTraverser();
-};
+// 4) Build traverser once (so cache persists across passes) and traverse ASTs
+$traverser = ($mode === 'WithCache') ? new CachingNodeTraverser() : new NodeTraverser();
+$resolver = new NameResolver(null, ['preserveOriginalNames' => true]);
+$traverser->addVisitor($resolver);
 
-$onePass = function () use ($traverserFactory): array {
-	$traverser = $traverserFactory();
-	$resolver = new NameResolver(null, ['preserveOriginalNames' => true]);
-	$counter = new CountingVisitor();
-	// Both modes use the same visitors
-	if ($traverser instanceof CachingNodeTraverser) {
-		$traverser->addVisitor($resolver);
-		$traverser->addVisitor($counter);
-	} else {
-		$traverser->addVisitor($resolver);
-		$traverser->addVisitor($counter);
+// Example visitor that only applies to a specific node type, to demonstrate caching
+final class FunctionOnlyVisitor extends NodeVisitorAbstract
+{
+	public function appliesTo(Node $node): bool
+	{
+		return $node instanceof \PhpParser\Node\Stmt\Function_;
 	}
 
-	// Use $GLOBALS['__ASTS'] set below to avoid copying large arrays via use()
+	public function enterNode(Node $node)
+	{
+		return null;
+	}
+}
+
+$functionOnlyVisitor = new FunctionOnlyVisitor();
+$traverser->addVisitor($functionOnlyVisitor);
+
+$counter = new CountingVisitor();
+$traverser->addVisitor($counter);
+
+$onePass = function () use ($traverser, $counter): array {
+	// reset counter for this pass
+	$counter->nodesVisited = 0;
 	foreach ($GLOBALS['__ASTS'] as $stmts) {
-		if ($traverser instanceof CachingNodeTraverser) {
-			$traverser->traverse($stmts);
-		} else {
-			$traverser->traverse($stmts);
-		}
+		$traverser->traverse($stmts);
 	}
 	return ['visited' => $counter->nodesVisited];
 };
