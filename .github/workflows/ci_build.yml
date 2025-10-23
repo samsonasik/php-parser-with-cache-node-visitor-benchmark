@@ -17,8 +17,8 @@ jobs:
             matrix:
                 php_version: ['8.2']
                 directory:
-                    - 'src/WithCache'
                     - 'src/WithoutCache'
+                    - 'src/WithCache'
 
         name: Benchmark Build - ${{ matrix.directory }}
 

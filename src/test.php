@@ -104,6 +104,12 @@ function collectPhpFiles(string $dir): array
 		}
 		$path = $fileInfo->getPathname();
 		if (substr($path, -4) === '.php') {
+			if (str_ends_with($path, 'NodeTraverser.php')) {
+				// avoid mix loading patch traverser
+				echo 'here';
+				continue;
+			}
+
 			$files[] = $path;
 		}
 	}
