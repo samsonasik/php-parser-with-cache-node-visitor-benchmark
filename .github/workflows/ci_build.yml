@@ -1,0 +1,38 @@
+name: Benchmark Build
+
+on:
+    pull_request:
+        branches:
+            - main
+    push:
+        branches:
+            - main
+
+jobs:
+    end_to_end:
+        runs-on: ubuntu-latest
+        timeout-minutes: 3
+        strategy:
+            fail-fast: false
+            matrix:
+                php_version: ['8.2']
+                directory:
+                    - 'src/WithCache'
+                    - 'src/WithoutCache'
+
+        name: Benchmark Build - ${{ matrix.directory }}
+
+        steps:
+            -   uses: actions/checkout@v4
+
+            -   uses: shivammathur/setup-php@v2
+                with:
+                    php-version: ${{ matrix.php_version }}
+                    coverage: none
+
+            -
+                run: composer install --ansi
+                working-directory: ${{ matrix.directory }}
+
+            -   run: php ../src/test.php
+                working-directory: ${{ matrix.directory }}
