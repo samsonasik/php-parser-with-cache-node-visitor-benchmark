@@ -10,9 +10,9 @@ php ../test.php
 php-parser visitor benchmark
 Mode            : WithoutCache
 ------------------------------------------------------------
-Nodes visited   : 13,120,600
-Total time      : 9,000.00 ms
-Peak memory     : 378.00 MB
+Nodes visited   : 43,782,000
+Total time      : 38,186.66 ms
+Peak memory     : 1.38 GB
 ============================================================
 ```
 
@@ -22,13 +22,14 @@ Peak memory     : 378.00 MB
 cd src/WithCache
 composer install
 php ../test.php
+
 php-parser visitor benchmark
 Mode            : WithCache
 ------------------------------------------------------------
-Nodes visited   : 13,120,600
-Total time      : 8,332.40 ms
-Peak memory     : 378.00 MB
+Nodes visited   : 43,782,000
+Total time      : 35,737.56 ms
+Peak memory     : 1.38 GB
 ============================================================
 ```
 
-<img width="1053" height="229" alt="Screenshot 2025-10-23 at 10 12 24" src="https://github.com/user-attachments/assets/afc021bd-47d0-4631-af00-6d2840dc6e52" />
+<img width="1009" height="207" alt="Image" src="https://github.com/user-attachments/assets/8475f29c-5e6a-4792-90ca-385e592e1063" />

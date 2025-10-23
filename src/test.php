@@ -123,27 +123,9 @@ function formatBytes(int $bytes): string
 	return number_format($size, 2) . ' ' . $units[$i];
 }
 
-$defaultTargets = [
-	$cwd . '/vendor/nikic/php-parser/lib/PhpParser',
-	$cwd . '/vendor/nikic/php-parser/lib',
-	$cwd . '/vendor',
-];
-
-$targetDir = null;
-foreach ($defaultTargets as $candidate) {
-	if (is_dir($candidate)) {
-		$targetDir = $candidate;
-		break;
-	}
-}
-
-if ($targetDir === null) {
-	fwrite(STDERR, "No target directory found to parse.\n");
-	exit(1);
-}
-
 // 3) Collect files and parse them once to ASTs
-$files = collectPhpFiles($targetDir);
+// locate whole parent src director for both target dirs for exact same files
+$files = collectPhpFiles($cwd . '/../../src');
 if ($files === []) {
 	fwrite(STDERR, "No PHP files found under: {$targetDir}\n");
 	exit(1);
