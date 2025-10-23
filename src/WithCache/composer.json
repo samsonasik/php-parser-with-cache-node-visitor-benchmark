@@ -1,0 +1,20 @@
+{
+    "require": {
+        "nikic/php-parser": "5.6.2",
+        "symplify/vendor-patches": "^11.5"
+    },
+     "extra": {
+        "patches": {
+            "nikic/php-parser": [
+                "https://raw.githubusercontent.com/rectorphp/vendor-patches/main/patches/nikic-php-parser-lib-phpparser-nodetraverser-php.patch"
+            ]
+        },
+        "composer-exit-on-patch-failure": true,
+        "enable-patching": true
+    },
+    "config": {
+        "allow-plugins": {
+            "cweagans/composer-patches": true
+        }
+    }
+}
