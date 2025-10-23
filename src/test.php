@@ -209,17 +209,15 @@ $traverser->addVisitor($functionOnlyVisitor);
 $counter = new CountingVisitor();
 $traverser->addVisitor($counter);
 
-$onePass = function () use ($traverser, $counter): array {
+$onePass = function () use ($traverser, $counter, $asts): array {
 	// reset counter for this pass
 	$counter->nodesVisited = 0;
-	foreach ($GLOBALS['__ASTS'] as $stmts) {
+	foreach ($asts as $stmts) {
 		$traverser->traverse($stmts);
 	}
+
 	return ['visited' => $counter->nodesVisited];
 };
-
-// expose ASTs for the closure
-$GLOBALS['__ASTS'] = $asts;
 
 // Measured passes
 $visitedTotal = 0;
@@ -239,9 +237,6 @@ echo "Nodes visited   : " . number_format($visitedTotal) . "\n";
 echo "Total time      : " . number_format($elapsedMs, 2) . " ms\n";
 echo "Peak memory     : " . formatBytes($peakMem) . "\n";
 echo str_repeat('=', 60) . "\n";
-
-// Cleanup global
-unset($GLOBALS['__ASTS']);
 
 // Exit success
 exit(0);
