@@ -5,24 +5,12 @@ declare(strict_types=1);
 //   cd src/WithCache && php ../test.php
 //   cd src/WithoutCache && php ../test.php
 
-// 1) Locate Composer autoload from the current working directory first (WithCache/WithoutCache)
-$autoloadCandidates = [
-	getcwd() . '/vendor/autoload.php',
-	__DIR__ . '/vendor/autoload.php',
-	__DIR__ . '/WithCache/vendor/autoload.php',
-	__DIR__ . '/WithoutCache/vendor/autoload.php',
-];
+$cwd = getcwd() ?: __DIR__;
+$mode = basename($cwd); // WithCache / WithoutCache
 
-$autoloadLoaded = false;
-foreach ($autoloadCandidates as $autoload) {
-	if (is_file($autoload)) {
-		require $autoload;
-		$autoloadLoaded = true;
-		break;
-	}
-}
+require_once __DIR__ . DIRECTORY_SEPARATOR  . $mode . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
 
-if (!$autoloadLoaded || !class_exists(\PhpParser\ParserFactory::class)) {
+if (! class_exists(\PhpParser\ParserFactory::class)) {
 	fwrite(STDERR, "Could not locate Composer autoload or php-parser.\n");
 	fwrite(STDERR, "Ensure you run from src/WithCache or src/WithoutCache.\n");
 	exit(1);
@@ -135,8 +123,6 @@ function formatBytes(int $bytes): string
 	return number_format($size, 2) . ' ' . $units[$i];
 }
 
-// 2) Determine target directory to parse
-$cwd = getcwd() ?: __DIR__;
 $defaultTargets = [
 	$cwd . '/vendor/nikic/php-parser/lib/PhpParser',
 	$cwd . '/vendor/nikic/php-parser/lib',
@@ -164,8 +150,6 @@ if ($files === []) {
 }
 
 $iterations = 100;
-
-$mode = basename($cwd); // WithCache / WithoutCache
 
 echo "php-parser visitor benchmark\n";
 echo "Mode            : {$mode}\n";
@@ -200,7 +184,7 @@ if ($asts === []) {
 
 // proceed to measured traversal output only
 
-// 4) Build traverser once (so cache persists across passes) and traverse ASTs
+// Build traverser once (so cache persists across passes) and traverse ASTs
 $traverser = ($mode === 'WithCache') ? new CachingNodeTraverser() : new NodeTraverser();
 $resolver = new NameResolver(null, ['preserveOriginalNames' => true]);
 $traverser->addVisitor($resolver);
