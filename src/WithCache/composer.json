@@ -1,7 +1,8 @@
 {
     "require": {
         "nikic/php-parser": "5.6.2",
-        "symplify/vendor-patches": "^11.5"
+        "symplify/vendor-patches": "^11.5",
+        "rector/rector": "dev-main"
     },
      "extra": {
         "patches": {

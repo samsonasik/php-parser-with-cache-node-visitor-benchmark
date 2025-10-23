@@ -5,6 +5,8 @@ declare(strict_types=1);
 //   cd src/WithCache && php ../test.php
 //   cd src/WithoutCache && php ../test.php
 
+@ini_set('memory_limit', '-1');
+
 $cwd = getcwd() ?: __DIR__;
 $mode = basename($cwd); // WithCache / WithoutCache
 
@@ -129,8 +131,10 @@ function formatBytes(int $bytes): string
 }
 
 // 3) Collect files and parse them once to ASTs
-// locate whole parent src director for both target dirs for exact same files
-$files = collectPhpFiles($cwd . '/../../src');
+$files = collectPhpFiles($cwd . '/vendor/rector/rector/src');
+$files = array_merge($files, collectPhpFiles($cwd . '/vendor/rector/rector/rules'));
+$files = array_merge($files, collectPhpFiles($cwd . '/vendor/nikic/php-parser/lib/PhpParser'));
+
 if ($files === []) {
 	fwrite(STDERR, "No PHP files found under: {$targetDir}\n");
 	exit(1);

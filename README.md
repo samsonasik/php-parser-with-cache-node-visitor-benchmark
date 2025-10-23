@@ -10,9 +10,9 @@ php ../test.php
 php-parser visitor benchmark
 Mode            : WithoutCache
 ------------------------------------------------------------
-Nodes visited   : 43,782,000
-Total time      : 38,186.66 ms
-Peak memory     : 1.38 GB
+Nodes visited   : 45,214,600
+Total time      : 51,610.43 ms
+Peak memory     : 2.18 GB
 ============================================================
 ```
 
@@ -26,9 +26,9 @@ php ../test.php
 php-parser visitor benchmark
 Mode            : WithCache
 ------------------------------------------------------------
-Nodes visited   : 43,782,000
-Total time      : 35,737.56 ms
-Peak memory     : 1.38 GB
+Nodes visited   : 45,214,600
+Total time      : 48,756.19 ms
+Peak memory     : 2.18 GB
 ============================================================
 ```
 
