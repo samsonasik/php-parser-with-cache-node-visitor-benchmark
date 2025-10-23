@@ -106,7 +106,6 @@ function collectPhpFiles(string $dir): array
 		if (substr($path, -4) === '.php') {
 			if (str_ends_with($path, 'NodeTraverser.php')) {
 				// avoid mix loading patch traverser
-				echo 'here';
 				continue;
 			}
 
