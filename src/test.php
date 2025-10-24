@@ -1,5 +1,13 @@
 <?php
+
 declare(strict_types=1);
+
+use PhpParser\ParserFactory;
+use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitorAbstract;
+use PhpParser\Node;
+use PhpParser\Error;
+use PhpParser\NodeVisitor;
 
 // Simple php-parser benchmark runnable from src/WithCache or src/WithoutCache via:
 //   cd src/WithCache && php ../test.php
@@ -17,27 +25,6 @@ if (! class_exists(\PhpParser\ParserFactory::class)) {
 	fwrite(STDERR, "Ensure you run from src/WithCache or src/WithoutCache.\n");
 	exit(1);
 }
-
-use PhpParser\ParserFactory;
-use PhpParser\NodeTraverser;
-use PhpParser\NodeVisitor\NameResolver;
-use PhpParser\NodeVisitorAbstract;
-use PhpParser\Node;
-use PhpParser\Error;
-use PhpParser\NodeVisitor;
-
-final class CountingVisitor extends NodeVisitorAbstract
-{
-	public int $nodesVisited = 0;
-
-	public function enterNode(Node $node)
-	{
-		// Count every node visited. Returning null keeps traversal unchanged.
-		$this->nodesVisited++;
-		return null;
-	}
-}
-
 /**
  * Custom traverser that caches visited nodes across passes and skips traversing
  * children for nodes already seen. Both directories use the same visitors; only
@@ -60,26 +47,22 @@ final class CachingNodeTraverser extends NodeTraverser
 	 */
 	public function getVisitorsForNode(Node $node)
 	{
-		$class = $node::class;
-		if (isset($this->visitorsByClass[$class])) {
-			return $this->visitorsByClass[$class];
+		if (isset($this->visitorsByClass[$node::class])) {
+			return $this->visitorsByClass[$node::class];
 		}
 
-		$applicable = [];
 		foreach ($this->visitors as $visitor) {
-			if (method_exists($visitor, 'appliesTo')) {
-				// Optional applicability hook; treat falsey as not applicable.
-				/** @var callable $call */
-				$call = [$visitor, 'appliesTo'];
-				if (!\is_callable($call) || (bool) $call($node) !== true) {
-					continue;
+			if ($visitor instanceof SomeVisitorAppInterface) {
+				foreach ($visitor->getNodeTypes() as $nodeType) {
+					if (is_a($node, $nodeType, true)) {
+						$this->visitorsByClass[$node::class][] = $visitor;
+						continue 2;
+					}
 				}
 			}
-			$applicable[] = $visitor;
 		}
 
-		$this->visitorsByClass[$class] = $applicable;
-		return $applicable;
+		return $this->visitorsByClass[$node::class] ?? $this->visitors;
 	}
 }
 
@@ -106,11 +89,6 @@ function collectPhpFiles(string $dir): array
 		}
 		$path = $fileInfo->getPathname();
 		if (substr($path, -4) === '.php') {
-			if (str_ends_with($path, 'NodeTraverser.php')) {
-				// avoid mix loading patch traverser
-				continue;
-			}
-
 			$files[] = $path;
 		}
 	}
@@ -133,7 +111,6 @@ function formatBytes(int $bytes): string
 // 3) Collect files and parse them once to ASTs
 $files = collectPhpFiles($cwd . '/vendor/rector/rector/src');
 $files = array_merge($files, collectPhpFiles($cwd . '/vendor/rector/rector/rules'));
-$files = array_merge($files, collectPhpFiles($cwd . '/vendor/nikic/php-parser/lib/PhpParser'));
 
 if ($files === []) {
 	fwrite(STDERR, "No PHP files found under: {$targetDir}\n");
@@ -173,19 +150,19 @@ if ($asts === []) {
 	exit(1);
 }
 
-// proceed to measured traversal output only
-
-// Build traverser once (so cache persists across passes) and traverse ASTs
-$traverser = ($mode === 'WithCache') ? new CachingNodeTraverser() : new NodeTraverser();
-$resolver = new NameResolver(null, ['preserveOriginalNames' => true]);
-$traverser->addVisitor($resolver);
+interface SomeVisitorAppInterface
+{
+}
 
 // Example visitor that only applies to a specific node type, to demonstrate caching
-final class FunctionOnlyVisitor extends NodeVisitorAbstract
+final class FunctionOnlyVisitor extends NodeVisitorAbstract implements SomeVisitorAppInterface
 {
-	public function appliesTo(Node $node): bool
+	/**
+	 * @return array<int, class-string<Node>>
+	 */
+	public function getNodeTypes(): array
 	{
-		return $node instanceof \PhpParser\Node\Stmt\Function_;
+		return [\PhpParser\Node\Stmt\Function_::class];
 	}
 
 	public function enterNode(Node $node)
@@ -194,11 +171,66 @@ final class FunctionOnlyVisitor extends NodeVisitorAbstract
 	}
 }
 
-$functionOnlyVisitor = new FunctionOnlyVisitor();
-$traverser->addVisitor($functionOnlyVisitor);
+// Example visitor that only applies to a specific node type, to demonstrate caching
+final class ClassOnlyVisitor extends NodeVisitorAbstract implements SomeVisitorAppInterface
+{
+	/**
+	 * @return array<int, class-string<Node>>
+	 */
+	public function getNodeTypes(): array
+	{
+		return [\PhpParser\Node\Stmt\Class_::class];
+	}
 
-$counter = new CountingVisitor();
-$traverser->addVisitor($counter);
+	public function enterNode(Node $node)
+	{
+		return null;
+	}
+}
+
+// Example visitor that only applies to a specific node type, to demonstrate caching
+final class ClassMethodOnlyVisitor extends NodeVisitorAbstract implements SomeVisitorAppInterface
+{
+	/**
+	 * @return array<int, class-string<Node>>
+	 */
+	public function getNodeTypes(): array
+	{
+		return [\PhpParser\Node\Stmt\ClassMethod::class];
+	}
+
+	public function enterNode(Node $node)
+	{
+		return null;
+	}
+}
+
+final class CountingVisitor extends NodeVisitorAbstract implements SomeVisitorAppInterface
+{
+	public int $nodesVisited = 0;
+
+	public function getNodeTypes(): array
+	{
+		return [Node::class];
+	}
+
+	public function enterNode(Node $node)
+	{
+		// Count every node visited. Returning null keeps traversal unchanged.
+		$this->nodesVisited++;
+		return null;
+	}
+}
+
+$visitors = [
+	new FunctionOnlyVisitor(),
+	new ClassOnlyVisitor(),
+	new ClassMethodOnlyVisitor(),
+	$counter = new CountingVisitor(),
+];
+
+// Build traverser once (so cache persists across passes) and traverse ASTs
+$traverser = ($mode === 'WithCache') ? new CachingNodeTraverser(...$visitors) : new NodeTraverser(...$visitors);
 
 $onePass = function () use ($traverser, $counter, $asts): array {
 	// reset counter for this pass

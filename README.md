@@ -10,9 +10,9 @@ php ../test.php
 php-parser visitor benchmark
 Mode            : WithoutCache
 ------------------------------------------------------------
-Nodes visited   : 45,214,600
-Total time      : 51,610.43 ms
-Peak memory     : 2.18 GB
+Nodes visited   : 32,272,800
+Total time      : 16,974.85 ms
+Peak memory     : 182.00 MB
 ============================================================
 ```
 
@@ -26,10 +26,10 @@ php ../test.php
 php-parser visitor benchmark
 Mode            : WithCache
 ------------------------------------------------------------
-Nodes visited   : 45,214,600
-Total time      : 48,756.19 ms
-Peak memory     : 2.18 GB
+Nodes visited   : 32,272,800
+Total time      : 10,218.84 ms
+Peak memory     : 182.00 MB
 ============================================================
 ```
 
-<img width="1009" height="207" alt="Image" src="https://github.com/user-attachments/assets/8475f29c-5e6a-4792-90ca-385e592e1063" />
+<img width="1012" height="205" alt="Image" src="https://github.com/user-attachments/assets/578b4857-a6a5-4b73-b898-b2ac95c8f373" />
