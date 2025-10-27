@@ -11,7 +11,7 @@ php-parser visitor benchmark
 Mode            : WithoutCache
 ------------------------------------------------------------
 Nodes visited   : 32,272,800
-Total time      : 16,974.85 ms
+Total time      : 17,215.19 ms
 Peak memory     : 182.00 MB
 ============================================================
 ```
@@ -27,7 +27,7 @@ php-parser visitor benchmark
 Mode            : WithCache
 ------------------------------------------------------------
 Nodes visited   : 32,272,800
-Total time      : 10,218.84 ms
+Total time      : 10,397.70 ms
 Peak memory     : 182.00 MB
 ============================================================
 ```
