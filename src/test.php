@@ -51,6 +51,7 @@ final class CachingNodeTraverser extends NodeTraverser
 			return $this->visitorsByClass[$node::class];
 		}
 
+		$this->visitorsByClass[$node::class] = [];
 		foreach ($this->visitors as $visitor) {
 			if ($visitor instanceof SomeVisitorAppInterface) {
 				foreach ($visitor->getNodeTypes() as $nodeType) {
@@ -62,7 +63,7 @@ final class CachingNodeTraverser extends NodeTraverser
 			}
 		}
 
-		return $this->visitorsByClass[$node::class] ?? $this->visitors;
+		return $this->visitorsByClass[$node::class];
 	}
 }
 

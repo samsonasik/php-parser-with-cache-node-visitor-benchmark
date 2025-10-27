@@ -32,4 +32,4 @@ Peak memory     : 182.00 MB
 ============================================================
 ```
 
-<img width="1012" height="205" alt="Image" src="https://github.com/user-attachments/assets/578b4857-a6a5-4b73-b898-b2ac95c8f373" />
+<img width="964" height="195" alt="Image" src="https://github.com/user-attachments/assets/a1c139af-a4aa-429a-a1c1-676b2bb32bd4" />
